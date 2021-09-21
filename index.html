@@ -4,89 +4,122 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    <link
-        rel="stylesheet"
-        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-        crossorigin="anonymous"
-      />
-    <link rel="stylesheet" href="static/css/style.css">
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/topojson.v3.min.js"></script>
+    <title>Leaflet-Basic-Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+    crossorigin=""/>
+
+  
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     
+    
+    <link rel="stylesheet" type="text/css" href="static/css/style.css">
 </head>
-<body class="bg-dark">
-    <div class="wrapper">
-        <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
-            <a class="navbar-brand" href="index.html">UFO Sightings</a>
-        </nav>
-    </div>
-    <div class="jumbotron">
-        <h1 class="display-4">The Truth Is Out There</h1>
-    </div>
-    <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-4">
-            <h3>UFO Sightings: Fact of Fancy? <small>Ufologists Weigh In</small></h3>
-          </div>
-          <div class="col-md-8">
-            <p>
-              Are we alone in the universe? For millennia, humans have turned to the sky to answer this question. Now, thanks to research generously funded by W. Avy, a UFO-enthusiast and amateur ufologist, we can supplement our sky-searching with data analysis.<br><br>"The release of this analysis is well-timed: It coincides with the celebration of World UFO Day, which is a moment for ufologists around the world to connect, relax, and sample a range of UFO-themed snacks," said Dr. Ursula F. Olivier, the world's preeminent expert on circular sightings. "Citizen-scientists can be especially helpful in both cataloguing sightings—which is hugely helpful for us in our search for aliens—and in helping us celebrate the work that has already been done, such as this data visualization project, which will help us raise awareness of the ubiquity of sightings!"<br><br>Not everyone is ready to celebrate, however. Local CEO and vocal anti-alien activist V. Isualize reached out to our reporters to go on record as firmly opposed to any attempts to provide access to this data. "If there are aliens, they certainly would like to be left alone," she stated, before directing us to the Leave Aliens Alone (LAA) community engagement initiative she founded and funds.<br><br>So what do YOU think? Are we alone in the universe? Are aliens trying to contact us, or do they want to be left alone? Dig through the data yourself, and let us know what you see.
+<body>
+    <!-- The div that holds our map -->
+    <div id="mapid"></div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+ 
+    <!-- Our JavaScript -->
+    <script type="text/javascript">
+
+// Create the map object with a center and zoom level.
+let map = L.map('mapid').setView([41.2610, -95.9376], 4);
+
+  /* Control panel to display map layers */
+  var controlLayers = L.control.layers( null, null, {
+    position: "topright",
+    collapsed: false
+  }).addTo(map);
+
+  // display Carto basemap tiles with light features and labels
+  var light = L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map); // EDIT - insert or remove ".addTo(map)" before last semicolon to display by default
+  controlLayers.addBaseLayer(light, 'OpenStreetMap.DE');
+
+  /* Stamen colored terrain basemap tiles with labels */
+  var terrain = L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
+  }); 
+  controlLayers.addBaseLayer(terrain, 'Stamen Terrain basemap');
+
+  // see more basemap options at https://leaflet-extras.github.io/leaflet-providers/preview/
+
+  // Read markers data from data.csv
+  $.get('https://raw.githubusercontent.com/sjpozzuoli/Daves_Eagles/main/html_site_static_Leaflet/data_clusters_latlong_july21.csv', function(csvString) {
+    
+    // Use PapaParse to convert string to array of objects
+    var data = Papa.parse(csvString, {header: true, dynamicTyping: false}).data;
+
+    // Create function for radius and color count
+   
+    for (var i in data) {
+        var row = data[i];
+            function radiusInfo(x) {
+        if (x <= 392) {
+            return "6";
+          }
+          if (x > 392 && x <= 784) {
+            return "4";
+          }
+          if (x > 784 && x <= 1176) {
+            return "2";
+          }
+          if (x > 1176) {
+            return "1";
+          };
+        }
+        
+     function getColor(a) {
+      if (a == 0) {
+          return "#fa4d56";
+        }
+        if (a == 1) {
+          return "#002d9c";
+        }
+        if (a == 2) {
+          return "#009d9a";
+        }
+        if (a == 3) {
+          return "#a56eff";
+        }
+        return "#98ee00";
+      }
+     
+      var marker = L.circleMarker([row.latitude, row.longitude], {
+        opacity: 1,
+        
+      }).bindPopup(row.city + ', ' + row.state);
+      marker.setStyle({fillColor: getColor(row.class), color: getColor(row.class),
+      radius: radiusInfo(row.hotness_rank),
+      weight: 10
+    })
+      marker.addTo(map);
+    }
+
+  });
+
+  map.attributionControl.setPrefix(
+    'View <a href="https://github.com/HandsOnDataViz/leaflet-map-csv" target="_blank">code on GitHub</a>'
+  );
+
+// We create the tile layer that will be the background of our map.
+let streets = L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});   
 
 
-            </p>
-           </div>
-        </div>
-    </div>
-    <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-3">
-            <form class="bg-dark">
-                <p>Filter Search</p>
-            </form>
-            <ul class="list-group bg-dark">
-                <li class="list-group-item bg-dark">
-                    <label for="date">Enter Date</label>
-                    <input type="text" placeholder="1/10/2010" id="datetime" />   
-                </li>
-                <li class="list-group-item bg-dark">
-                    <label for="date">Enter a City</label><br>
-                    <input type="text" placeholder="roswell" id="city" size="30" />
-                </li>
-                <li class="list-group-item bg-dark">
-                    <label for="date">Enter a State</label><br>
-                    <input type="text" placeholder="ca" id="state" size="30" />
-                </li>
-                <li class="list-group-item bg-dark">
-                    <label for="date">Enter a Country</label><br>
-                    <input type="text" placeholder="us" id="country" size="30" />
-                </li>
-                <li class="list-group-item bg-dark">
-                    <label for="date">Enter a Shape</label><br>
-                    <input type="text" placeholder="circle" id="state" size="30" />
-                </li>
-              
-            </ul>  
-          </div>
-          <div class="col-md-9">
-            <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>City</th>
-                    <th>State</th>
-                    <th>Country</th>
-                    <th>Shape</th>
-                    <th>Duration</th>
-                    <th>Comments</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-          </div>
-        </div>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.11.0/d3.js"></script>
-    <script src="static/js/data.js"></script>
-    <script src="static/js/app.js"></script>
+streets.addTo(map);
+    </script>
 </body>
 </html>
